@@ -1,0 +1,96 @@
+#!/bin/bash
+now=$(date +"%m_%d_%Y")
+cp -p /etc/sssd/sssd.conf /etc/sssd/sssd.conf_$now
+REL=`cat /etc/redhat-release | awk '{print $7}'`
+        case $REL in
+                6.[0-9])
+
+                        ###############Removing Host#########################
+                        service sssd stop
+                        newpass="Domain@345";
+                        export HISTIGNORE="expect*";
+
+                        expect -c "
+                        spawn adcli delete-computer -U Serv_sacc -D rci.rogers.ca
+                        expect "?assword:"
+                        send \"$newpass\r\"
+                        expect eof"
+                        sleep 10
+                        #######################Package Update##################################
+                        yum -y update expect krb5-workstation sssd oddjob oddjob-mkhomedir samba-common samba-common-tools adcli authconfig
+
+                        ###############Joining Host#########################
+                        newpass="Domain@345";
+                        export HISTIGNORE="expect*";
+
+                        expect -c "
+spawn adcli join -v --login-user=Serv_sacc --computer-ou="OU=DEV,OU=NPE,OU=Intel,OU=Servers,OU=Rogers3.0,DC=rci,DC=rogers,DC=ca" -D rci.rogers.ca --show-details
+                        expect "?assword:"
+                        send \"$newpass\r\"
+                        expect eof"
+                        sleep 10
+
+                        ;;
+                6.10)
+
+                        ###############Removing Host#########################
+                        service sssd stop
+                        newpass="Domain@345";
+                        export HISTIGNORE="expect*";
+
+                        expect -c "
+                        spawn adcli delete-computer -U Serv_sacc -D rci.rogers.ca
+                        expect "?assword:"
+                        send \"$newpass\r\"
+                        expect eof"
+                        sleep 10
+                        #######################Package Update##################################
+                        yum -y update expect krb5-workstation sssd oddjob oddjob-mkhomedir samba-common samba-common-tools adcli authconfig
+
+                        ###############Joining Host#########################
+                        newpass="Domain@345";
+                        export HISTIGNORE="expect*";
+
+                        expect -c "
+spawn adcli join -v --login-user=Serv_sacc --computer-ou="OU=DEV,OU=NPE,OU=Intel,OU=Servers,OU=Rogers3.0,DC=rci,DC=rogers,DC=ca" -D rci.rogers.ca --show-details
+                        expect "?assword:"
+                        send \"$newpass\r\"
+                        expect eof"
+                        sleep 10
+
+                        ;;
+
+
+                 7.[0-7])
+                        ###############Removing Host#########################
+                        systemctl stop sssd
+                        newpass="Domain@345";
+                        export HISTIGNORE="expect*";
+
+                        expect -c "
+                        spawn  realm leave --remove --user=Serv_sacc rci.rogers.ca
+                        expect "?assword:"
+                        send \"$newpass\r\"
+                        expect eof"
+                        sleep 10
+
+                        yum -y update expect adcli sssd realmd oddjob oddjob-mkhomedir samba-common samba-common-tools krb5-workstation  
+
+                        ###############Joining Host#########################
+                        newpass="Domain@345";
+                        export HISTIGNORE="expect*";
+
+                        expect -c "
+                        spawn realm join --user=Serv_sacc --computer-ou="OU=DEV,OU=NPE,OU=Intel,OU=Servers,OU=Rogers3.0,DC=rci,DC=rogers,DC=ca" rci.rogers.ca --membership-software=adcli
+                        expect "?assword:"
+                        send \"$newpass\r\"
+                        expect eof"
+                        sleep 10
+
+                        ;;
+
+                *)
+                        echo "Unsupported OS"
+                         ;;
+
+              esac

@@ -1,0 +1,133 @@
+#!/bin/bash
+
+ ################Preparing SSD File file#####################
+                        rm -f /etc/sssd/sssd.conf
+                        touch /etc/sssd/sssd.conf
+                        chown root:root /etc/sssd/sssd.conf
+                        chmod 0600 /etc/sssd/sssd.conf
+
+                        echo "" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "[sssd]" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "domains = rci.rogers.ca" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "config_file_version = 2" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "services = nss, pam, sudo" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "" | tee -a /etc/sssd/sssd.conf > /dev/null
+
+                        echo "[sudo]" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "debug_level = 3" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "" | tee -a /etc/sssd/sssd.conf > /dev/null
+
+                        echo "[nss]" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "filter_groups = root" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "filter_users = root" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "debug_level = 3" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "" | tee -a /etc/sssd/sssd.conf > /dev/null
+
+                        echo "[pam]" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "debug_level = 3" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "" | tee -a /etc/sssd/sssd.conf > /dev/null
+
+                        echo "[domain/rci.rogers.ca]" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ad_domain = rci.rogers.ca" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ad_hostname = $HOSTNAME" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "krb5_realm = RCI.ROGERS.CA" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "realmd_tags = manages-system joined-with-samba" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "cache_credentials = True" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "id_provider = ad" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "auth_provider = ad" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "sudo_provider = ad" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "access_provider = simple" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "simple_allow_groups = hcl_linux_admins_gg, hcl_backup_admins_gg" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "chpass_provider = ad" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "krb5_store_password_if_offline = True" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "default_shell = /bin/bash" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "use_fully_qualified_names = False" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "fallback_homedir = /home/%u" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "entry_cache_timeout = 300" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "dyndns_update = False" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_id_mapping = True" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_schema = ad" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_idmap_range_min = 200000" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_idmap_range_max = 2000200000" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_idmap_range_size = 4000000" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_group_nesting_level = 5" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_sudo_full_refresh_interval = 600" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ldap_sudo_smart_refresh_interval = 60" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ad_maximum_machine_account_password_age = 0" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "ignore_group_members = true" | tee -a /etc/sssd/sssd.conf > /dev/null
+                        echo "debug_level = 3" | tee -a /etc/sssd/sssd.conf > /dev/null
+
+REL=`cat /etc/redhat-release | awk '{print $7}'`
+        case $REL in
+                6.[0-9])
+                        ################Start required services#####################
+                        authconfig --update --enablesssd --enablesssdauth --enablemkhomedir
+                        service messagebus restart
+                        service oddjobd stop
+                        service oddjobd start
+
+                        ################Starting SSD#####################
+
+                        service sssd stop
+                        rm -f /var/lib/sss/db/*
+                        rm -f /var/log/sssd/*
+                        service sssd start
+                        chkconfig oddjobd on
+                        chkconfig sssd on
+                        chkconfig messagebus on
+
+                         ;;
+                6.10)
+                       ################Start required services#####################
+                        authconfig --update --enablesssd --enablesssdauth --enablemkhomedir
+                        service messagebus restart
+                        service oddjobd stop
+                        service oddjobd start
+
+                        ################Starting SSD#####################
+
+                        service sssd stop
+                        rm -f /var/lib/sss/db/*
+                        rm -f /var/log/sssd/*
+                        service sssd start
+                        chkconfig oddjobd on
+                        chkconfig sssd on
+                        chkconfig messagebus on
+                        ;;
+
+                 7.[0-7])
+                        authconfig --update --enablesssd --enablesssdauth --enablemkhomedir
+
+                        systemctl stop oddjobd
+                        systemctl start oddjobd
+                        systemctl stop sssd
+                        rm -f /var/lib/sss/db/*
+                        rm -f /var/log/sssd/*
+                        systemctl start sssd
+                        systemctl enable oddjobd
+                        systemctl enable sssd
+
+                        ;;
+
+                *)
+                        echo "Unsupported OS"
+                         ;;
+
+              esac
+
+
+################Preparing nsswitch.conf File#####################
+now=$(date +"%m_%d_%Y")
+cp -p /etc/nsswitch.conf /etc/nsswitch.conf_$now
+sed -i 's/^passwd.*/passwd:     files sss/' /etc/nsswitch.conf
+sed -i 's/^shadow.*/shadow:     files sss/' /etc/nsswitch.conf
+sed -i 's/^group.*/group:      files sss/' /etc/nsswitch.conf
+sed -i 's/^services.*/services:   files sss/' /etc/nsswitch.conf
+sed -i 's/^netgroup.*/netgroup:   files sss/' /etc/nsswitch.conf
+sed -i 's/^automount.*/automount:  files sss/' /etc/nsswitch.conf
+/bin/egrep -v "sudoers" /etc/nsswitch.conf > /etc/nsswitch.conf-copy && cp -p /etc/nsswitch.conf-copy /etc/nsswitch.conf
+echo "sudoers:   sss files" | tee -a /etc/nsswitch.conf > /dev/null
+chmod 644 /etc/nsswitch.conf
+################Preparing krb5.conf File#####################
+cp -p /etc/krb5.conf /etc/krb5.conf_$now
+sed -i '/libdefaults/a  udp_preference_limit = 0\nallow_weak_crypto = true' /etc/krb5.conf
